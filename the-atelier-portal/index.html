@@ -335,9 +335,8 @@
             <p>Your application is now with the Membership Committee.</p>
         </div>
     </div>
-
 <script type="module">
-    // 1. UPDATED IMPORTS: Added 'doc' and 'setDoc', removed 'addDoc'
+    // 1. IMPORTS
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -389,7 +388,7 @@
         if(timer) timer.innerText = new Date(sec * 1000).toISOString().substr(14, 5);
     }, 1000);
 
-    // --- FIREBASE SUBMISSION ---
+    // --- SUBMISSION LOGIC ---
     document.getElementById('luxuryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -402,15 +401,16 @@
 
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
-        const randomId = 'XJ-' + Math.floor(Math.random() * 10000);
+        const randomId = 'XJ-' + Math.floor(1000 + Math.random() * 9000);
+
+        // IMPORTANT: Ensure this is the HTTPS URL from Make.com, not an email address
+const makeWebhookURL = "https://hook.eu1.make.com/17mfi5jxulf3lpn4drkkq5kbofgqmrfg";
 
         try {
-            // 2. CREATE THE CUSTOM ID: Using the user's name + Case ID
-            // "John Doe" becomes "john_doe-XJ-1234"
             const nameId = (data.full_name || "anonymous").toLowerCase().replace(/\s+/g, '_');
             const customDocPath = `${nameId}-${randomId}`;
 
-            // 3. UPDATED TRANSMISSION: Using setDoc(doc(...)) instead of addDoc
+            // 1. Save to Firebase
             await setDoc(doc(db, "petitions", customDocPath), {
                 ...data,
                 caseID: randomId,
@@ -418,6 +418,19 @@
                 status: "AWAITING_REVIEW"
             });
 
+            // 2. Send to Make.com Webhook
+            await fetch(makeWebhookURL, {
+                method: 'POST',
+                mode: 'no-cors', // Bypasses browser security blocks
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    full_name: data.full_name,
+                    email: data.email,
+                    caseID: randomId
+                })
+            });
+
+            // UI Success Animation
             formGrid.style.opacity = '0';
             setTimeout(() => {
                 formGrid.style.display = 'none';
@@ -460,4 +473,3 @@
 </script>
 </body>
 </html>
-
