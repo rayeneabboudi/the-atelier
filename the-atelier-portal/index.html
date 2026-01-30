@@ -337,8 +337,9 @@
     </div>
 
 <script type="module">
+    // 1. UPDATED IMPORTS: Added 'doc' and 'setDoc', removed 'addDoc'
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAbLEd0cp-TS4Lfej7uOCx3VhL6w-KPKn0",
@@ -404,7 +405,13 @@
         const randomId = 'XJ-' + Math.floor(Math.random() * 10000);
 
         try {
-            await addDoc(collection(db, "petitions"), {
+            // 2. CREATE THE CUSTOM ID: Using the user's name + Case ID
+            // "John Doe" becomes "john_doe-XJ-1234"
+            const nameId = (data.full_name || "anonymous").toLowerCase().replace(/\s+/g, '_');
+            const customDocPath = `${nameId}-${randomId}`;
+
+            // 3. UPDATED TRANSMISSION: Using setDoc(doc(...)) instead of addDoc
+            await setDoc(doc(db, "petitions", customDocPath), {
                 ...data,
                 caseID: randomId,
                 timestamp: serverTimestamp(),
@@ -453,3 +460,4 @@
 </script>
 </body>
 </html>
+
